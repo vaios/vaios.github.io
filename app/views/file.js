@@ -481,7 +481,7 @@ module.exports = Backbone.View.extend({
       file: this.model,
       repo: this.repo,
       alterable: true,
-      placeholder: this.model.isNew() && !this.model.translate
+      placeholder: this.model.isNew() && !this.model.translate && !this.model.isClone()
     });
 
     this.subviews['header'] = this.header;
@@ -833,11 +833,6 @@ module.exports = Backbone.View.extend({
     // Update Content.
     if (this.editor && this.editor.getValue) {
       this.model.set('content', this.editor.getValue());
-    }
-
-    // Update MetaData
-    if (this.metadataEditor) {
-      this.model.set('metadata', this.metadataEditor.getValue());
     }
 
     var label = this.model.get('writable') ?
@@ -1283,17 +1278,21 @@ module.exports = Backbone.View.extend({
     };
   },
 
+  defaultUploadPath: function(fileName) {
+    // Default to media directory if defined in config,
+    // current directory if no path specified
+    var dir = (this.config && this.config.media) ? this.config.media :
+      util.extractFilename(this.model.get('path'))[0];
+
+    return _.compact([dir, fileName]).join('/');
+  },
+
   upload: function(e, file, content, path) {
     // Loading State
     this.updateSaveState(t('actions.upload.uploading', { file: file.name }), 'saving');
 
-    // Default to media directory if defined in config,
-    // current directory if no path specified
-    var dir = this.config.media ? this.config.media :
-      util.extractFilename(this.model.get('path'))[0];
-    path = path || _.compact([dir, file.name]).join('/');
-
-    this.collection.upload(file, content, path, {
+    var uploadPath = path || this.defaultUploadPath(file.name);
+    this.collection.upload(file, content, uploadPath, {
       success: (function(model, res, options) {
         var name = res.content.name;
         var path = '{{site.baseurl}}/' + res.content.path;

@@ -85,14 +85,12 @@ module.exports = Backbone.Collection.extend({
       console.log(err);
     }
 
+    this.config = {};
     if (config && config.prose) {
       // Load _config.yml, set parsed value on collection
       // Extend to capture settings from outside config.prose
       // while allowing override
-      this.config = _.extend({
-        baseurl: config.baseurl,
-        languages: config.languages
-      }, config.prose);
+      this.config = _.extend(config, config.prose);
 
       if (config.prose.ignore) {
         this.parseIgnore(config.prose.ignore);
